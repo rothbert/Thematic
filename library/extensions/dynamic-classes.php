@@ -21,39 +21,33 @@ if ( function_exists( 'childtheme_override_body_class' ) )  {
 	 * @param array $classes body classes
 	 */
 	function thematic_body_class( $classes ) {
-		$current_layout = thematic_get_theme_opt( 'layout' );
-		
+
 		/**
-		 * Filter to control the layout
-		 * 
-		 * Accepts values of 'left-sidebar', 'three-columns', and 'right-sidebar'.
-		 * Note that the filter overrides the layout defined in the Theme Customizer
-		 * Default is 'right-sidebar'
-		 * 
-		 * @since 2.0
-		 * 
+		 * Filter to control the theme layout
+		 *
+		 * Accepts any string that is part of thematic_available_theme_layouts(). Note that
+		 * the filter overrides the layout defined in the Theme Customizer. Any invalid
+		 * layout string will be ignored and the theme's default layout will be used.
+		 *
+		 * @see thematic_available_theme_layouts()
+		 *
+		 * @since 2.0.0
+		 *
 		 * @param string $current_layout
 		 */
-		$current_layout = apply_filters( 'thematic_theme_layout', $current_layout );
-		
-		switch( $current_layout ) {
-			case 'left-sidebar':
-				$classes[] = 'left-sidebar';
-				break;
-			case 'three-columns':
-				$classes[] = 'three-columns';
-				break;
-			default:
-				$classes[] = 'right-sidebar';
-				break;
-		}
-		
+		$current_layout = apply_filters( 'thematic_current_theme_layout', thematic_get_theme_opt( 'layout' ) );
+
 		if ( is_page_template( 'template-page-fullwidth.php' ) ) {
 			$classes[] = 'full-width';
+		} elseif( in_array( $current_layout, thematic_available_layout_slugs() ) ) {
+			$classes[] = $current_layout;
+		} else {
+			$classes[] = thematic_default_theme_layout();
 		}
 		
-		if( thematic_is_legacy_xhtml() ) 
-			$classes[] = 'thematic-legacy';
+		if( thematic_is_legacy_xhtml() ) {
+			$classes[] = 'thematic-xhtml';
+		}
 		
 		/**
 		* Filter the body classes
@@ -129,20 +123,25 @@ if ( function_exists( 'childtheme_override_legacy_body_class' ) )  {
 			$c[] = 'postid-' . $postID;
 	
 			// Adds classes for the month, day, and hour when the post was published
-			if ( isset( $wp_query->post->post_date ) )
+			if ( isset( $wp_query->post->post_date ) ) {
 				thematic_date_classes( mysql2date( 'U', $wp_query->post->post_date ), $c, 's-' );
+			}
 	
 		// Special classes for BODY element when a single post
 		
 			// Adds category classes for each category on single posts
-			if ( $cats = get_the_category() )
-				foreach ( $cats as $cat )
+			if ( $cats = get_the_category() ) {
+				foreach ( $cats as $cat ) {
 					$c[] = 's-category-' . $cat->slug;
+				}
+			}
 
 			// Adds tag classes for each tag on single posts
-			if ( $tags = get_the_tags() )
-				foreach ( $tags as $tag )
+			if ( $tags = get_the_tags() ) {
+				foreach ( $tags as $tag ) {
 					$c[] = 's-tag-' . $tag->slug;
+				}
+			}
 
 			// Adds taxonomy classes for each term on single posts
 			$single_post_type = get_post_type_object( get_post_type( $post->ID ) );
@@ -174,8 +173,9 @@ if ( function_exists( 'childtheme_override_legacy_body_class' ) )  {
 			rewind_posts();
 			
 			// For posts with excerpts
-			if ( has_excerpt() )
+			if ( has_excerpt() ) {
 				$c[] = 's-has-excerpt';
+			}
 				
 			// For posts with comments open or closed
 			if ( comments_open() ) {
@@ -192,12 +192,14 @@ if ( function_exists( 'childtheme_override_legacy_body_class' ) )  {
 			}
 		
 			// For password-protected posts
-			if ( $post->post_password )
+			if ( $post->post_password ) {
 				$c[] = 's-protected';
+			}
 		
 			// For sticky posts
-			if ( is_sticky() )
-			   $c[] = 's-sticky';		
+			if ( is_sticky() ) {
+			   $c[] = 's-sticky';
+			}
 			
 		}
 	
@@ -245,14 +247,17 @@ if ( function_exists( 'childtheme_override_legacy_body_class' ) )  {
 			$c[] = 'page-author-' . sanitize_title_with_dashes( strtolower( get_the_author_meta( 'user_nicename', $post->post_author) ) );
 			
 			// Checks to see if the page has children and/or is a child page; props to Adam
-			if ( $page_children )
+			if ( $page_children ) {
 				$c[] = 'page-parent';
-			if ( $wp_query->post->post_parent )
+			}
+			if ( $wp_query->post->post_parent ) {
 				$c[] = 'page-child parent-pageid-' . $wp_query->post->post_parent;
+			}
 				
 			// For pages with excerpts
-			if ( has_excerpt() )
+			if ( has_excerpt() ) {
 				$c[] = 'page-has-excerpt';
+			}
 				
 			// For pages with comments open or closed
 			if ( comments_open() ) {
@@ -269,12 +274,14 @@ if ( function_exists( 'childtheme_override_legacy_body_class' ) )  {
 			}
 		
 			// For password-protected pages
-			if ( $post->post_password )
-				$c[] = 'page-protected';			
+			if ( $post->post_password ) {
+				$c[] = 'page-protected';
+			}			
 				
 			// Checks to see if the page is using a template	
-			if ( is_page_template() & !is_page_template('default') )
+			if ( is_page_template() & !is_page_template('default') ) {
 				$c[] = 'page-template page-template-' . str_replace( '.php', '-php', get_post_meta( $pageID, '_wp_page_template', true ) );
+			}
 			rewind_posts();
 		}
 	
@@ -291,8 +298,9 @@ if ( function_exists( 'childtheme_override_legacy_body_class' ) )  {
 	
 		if ( apply_filters( 'thematic_show_bc_loggedin', TRUE ) ) {
 	        // For when a visitor is logged in while browsing
-	        if ( $current_user->ID )
+	        if ( $current_user->ID ) {
 	            $c[] = 'loggedin';
+			}
 	    }
 	
 	 // Paged classes; for page x > 1 classes of index and all post types etc.
@@ -369,10 +377,10 @@ function thematic_browser_class_names($classes) {
 	$browser = $_SERVER[ 'HTTP_USER_AGENT' ];
 		
 	// Mac, PC ...or Linux
-	if ( preg_match( "/Mac/", $browser ) ){
+	if ( preg_match( "/Mac/", $browser ) ) {
 		$classes[] = 'mac';
 			
-	} elseif ( preg_match( "/Windows/", $browser ) ){
+	} elseif ( preg_match( "/Windows/", $browser ) ) {
 		$classes[] = 'windows';
 			
 	} elseif ( preg_match( "/Linux/", $browser ) ) {
@@ -388,10 +396,10 @@ function thematic_browser_class_names($classes) {
 		
 		if ( ( current_theme_supports( 'minorbrowserversion_all' )) || ( current_theme_supports( 'minorbrowserversion_ch' ) ) ) {
 			preg_match( "/Chrome\/(\d+.\d+)/si", $browser, $matches );
-			$ch_version = 'ch' . str_replace( '.', '-', $matches[1] );
+			$ch_version = 'ch' . str_replace( '.', '-', ( isset ( $matches[1] ) ? $matches[1] : null ) );
 		} else {
 			preg_match( "/Chrome\/(\d+)/si", $browser, $matches );
-			$ch_version = 'ch' . $matches[1];
+			$ch_version = 'ch' . ( isset ( $matches[1] ) ? $matches[1] : null );
 		}      
 		$classes[] = $ch_version;
 	
@@ -400,10 +408,10 @@ function thematic_browser_class_names($classes) {
 				
 		if ( ( current_theme_supports( 'minorbrowserversion_all' )) || ( current_theme_supports( 'minorbrowserversion_sf' ) ) ) {
 			preg_match( "/Version\/(\d+.\d+)/si", $browser, $matches );
-			$sf_version = 'sf' . str_replace( '.', '-', $matches[1] );
+			$sf_version = 'sf' . str_replace( '.', '-', ( isset ( $matches[1] ) ? $matches[1] : null ) );
 		} else {
 			preg_match( "/Version\/(\d+)/si", $browser, $matches );
-			$sf_version = 'sf' . $matches[1];
+			$sf_version = 'sf' . ( isset ( $matches[1] ) ? $matches[1] : null );
 			
 		}     
 		$classes[] = $sf_version;
@@ -413,10 +421,10 @@ function thematic_browser_class_names($classes) {
 				
 		if ( ( current_theme_supports( 'minorbrowserversion_all' ) ) || ( current_theme_supports( 'minorbrowserversion_op' ) ) ) {
 			preg_match( "/Version\/(\d+.\d+)/si", $browser, $matches );
-			$op_version = 'op' . str_replace( '.', '-', $matches[1] );      
+			$op_version = 'op' . str_replace( '.', '-', ( isset ( $matches[1] ) ? $matches[1] : null ) );      
 		} else {
 			preg_match( "/Version\/(\d+)/si", $browser, $matches );
-			$op_version = 'op' . $matches[1];      			
+			$op_version = 'op' . ( isset ( $matches[1] ) ? $matches[1] : null );      			
 		}
 		$classes[] = $op_version;
 				
@@ -425,10 +433,10 @@ function thematic_browser_class_names($classes) {
 		
 		if ( ( current_theme_supports( 'minorbrowserversion_all' )) || ( current_theme_supports( 'minorbrowserversion_ie' ) ) ) {
 			preg_match( "/MSIE (\d+.\d+)/si", $browser, $matches );
-			$ie_version = 'ie' . str_replace( '.', '-', $matches[1] );
+			$ie_version = 'ie' . str_replace( '.', '-', ( isset ( $matches[1] ) ? $matches[1] : null ) );
 		} else {
 			preg_match( "/MSIE (\d+)/si", $browser, $matches );
-			$ie_version = 'ie' . $matches[1];
+			$ie_version = 'ie' . ( isset ( $matches[1] ) ? $matches[1] : null );
 			
 		}
 		$classes[] = $ie_version;
@@ -438,10 +446,10 @@ function thematic_browser_class_names($classes) {
 				
 			if ( ( current_theme_supports( 'minorbrowserversion_all' ) ) || ( current_theme_supports( 'minorbrowserversion_ff' ) ) ) {
 				preg_match( "/Firefox\/(\d+.\d+)/si", $browser, $matches );
-				$ff_version = 'ff' . str_replace( '.', '-', $matches[1] );
+				$ff_version = 'ff' . str_replace( '.', '-', ( isset ( $matches[1] ) ? $matches[1] : null ) );
 			} else {
 				preg_match( "/Firefox\/(\d+)/si", $browser, $matches );
-				$ff_version = 'ff' . $matches[1];
+				$ff_version = 'ff' . ( isset ( $matches[1] ) ? $matches[1] : null );
 			}      
 			$classes[] = $ff_version;
 				
@@ -542,19 +550,22 @@ if (function_exists('childtheme_override_post_class'))  {
 		}
 	
 		// For password-protected posts
-		if ( $post->post_password )
+		if ( $post->post_password ) {
 			$c[] = 'protected';
+		}
 	
 		// For sticky posts
-		if (is_sticky())
+		if (is_sticky()) {
 		   $c[] = 'sticky';
+	   }
 	
 		// Applies the time- and date-based classes (below) to post DIV
 		thematic_date_classes( mysql2date( 'U', $post->post_date ), $c );
 	
 		// If it's the other to the every, then add 'alt' class
-		if ( ++$thematic_post_alt % 2 )
+		if ( ++$thematic_post_alt % 2 ) {
 			$c[] = 'alt';
+		}
 	
 	    // Adds post slug class, prefixed by 'slug-'
 	    $c[] = 'slug-' . $post->post_name; 
@@ -586,7 +597,7 @@ $thematic_post_alt = 1;
 /** 
  * Adds classes to commment li's using the WordPress comment_class filter
  *
- * @since 1.0
+ * @since 1.0.0
  */
 function thematic_add_comment_class($classes) {
     global $comment, $post;

@@ -74,7 +74,9 @@ function thematic_abovecommentsform() {
  * @link http://wordpress.org/extend/plugins/subscribe-to-comments/ Subscribe to Comments Plugin Page
  */
 function thematic_show_subscription_checkbox() {
-    if(function_exists('show_subscription_checkbox')) { show_subscription_checkbox(); }
+    if( function_exists( 'show_subscription_checkbox' ) ) { 
+		show_subscription_checkbox(); 
+	}
 }
 add_action('comment_form', 'thematic_show_subscription_checkbox', 98);
 
@@ -96,7 +98,9 @@ function thematic_belowcommentsform() {
  * @link http://wordpress.org/extend/plugins/subscribe-to-comments/ Subscribe to Comments Plugin Page
  */
 function thematic_show_manual_subscription_form() {
-    if(function_exists('show_manual_subscription_form')) { show_manual_subscription_form(); }
+    if( function_exists( 'show_manual_subscription_form' ) ) { 
+		show_manual_subscription_form(); 
+	}
 }
 add_action('thematic_belowcommentsform', 'thematic_show_manual_subscription_form', 5);
 
@@ -139,8 +143,11 @@ function thematic_multiplecomments_text() {
  * Creates the list comments arguments
  */
 function thematic_list_comments_arg() {
-	$content = 'type=comment&callback=thematic_comments';
-	return apply_filters('list_comments_arg', $content);
+	$content = array(
+		'type' => 'comment',
+		'callback' => 'thematic_comments'
+	);
+	return apply_filters( 'thematic_list_comments_arg', $content );
 }
 
 
@@ -213,10 +220,11 @@ function thematic_commentbutton_text() {
 function thematic_comment_form_args( $post_id = null ) {
 	global $user_identity, $id;
 
-	if ( null === $post_id )
-          $post_id = $id;
-      else
-          $id = $post_id;
+	if ( null === $post_id ) {
+		$post_id = $id;
+	} else {
+		$id = $post_id;
+	}
 
 	$req = get_option( 'require_name_email' );
 
@@ -239,9 +247,9 @@ function thematic_comment_form_args( $post_id = null ) {
 
 		'must_log_in'          => '<p id="login-req">' .  sprintf( __('You must be %1$slogged in%2$s to post a comment.', 'thematic'), sprintf('<a href="%s" title ="%s">', esc_attr( wp_login_url( apply_filters( 'the_permalink', get_permalink() ) ) ), esc_attr__( 'Log in', 'thematic' ) ), '</a>' ). '</p>',
 
-		'logged_in_as'         => '<p id="login"><span class="loggedin">' . sprintf( __('Logged in as %s', 'thematic' ), sprintf( ' <a href="%1$s" title="%2$s">%3$s</a>', admin_url( 'profile.php' ), sprintf( esc_attr__('Logged in as %s', 'thematic'), $user_identity ) , $user_identity ) ) .'</span> <span class="logout">' . sprintf('<a href="%s" title="%s">%s</a>' , esc_attr( wp_logout_url( apply_filters( 'the_permalink', get_permalink( $post_id ) ) ) ), esc_attr__('Log out of this account', 'thematic' ) , __('Log out?', 'thematic' ) ) . '</span></p>',
+		'logged_in_as'         => '<p id="login"><span class="loggedin">' . sprintf( __('Logged in as %s', 'thematic' ), sprintf( '<a href="%1$s">%2$s</a>', admin_url( 'profile.php' ), $user_identity ) ) .'</span>. <span class="logout">' . sprintf('<a href="%s">%s</a>' , esc_attr( wp_logout_url( apply_filters( 'the_permalink', get_permalink( $post_id ) ) ) ), __('Log out?', 'thematic' ) ) . '</span></p>',
 
-		'comment_notes_after'  => '<div id="form-allowed-tags" class="form-section"><p><span>' . sprintf( _x('You may use these %1$sHTML%2$s tags and attributes', '%$1s and %$2s are <abbr> tags', 'thematic'), '<abbr title="HyperText Markup Language">', '</abbr>' ) . '</span> <code>' . allowed_tags() . '</code></p></div>',
+		'comment_notes_after'  => '<div id="form-allowed-tags" class="form-section"><p><span>' . sprintf( _x('You may use these %1$sHTML%2$s tags and attributes:', '%$1s and %$2s are <abbr> tags', 'thematic'), '<abbr title="HyperText Markup Language">', '</abbr>' ) . '</span> <code>' . allowed_tags() . '</code></p></div>',
 
 		'id_form'              => 'commentform',
 		'id_submit'            => 'submit',
@@ -279,8 +287,9 @@ function thematic_include_comments() {
 	// Checking for defined constant to enable conditional comment display for Pages
     if (  current_theme_supports( 'thematic_legacy_comment_handling' ) && is_page() ) {
     	// Needs post-meta key/value of "comments" to call comments template on Pages!
-       	if ( get_post_custom_values('comments') )
+       	if ( get_post_custom_values('comments') ) {
 			comments_template('', true);
+		}
 	// WordPress standard comment handling is the default if constant is not set
 	} else {
 		comments_template('', true);
@@ -296,13 +305,15 @@ function thematic_get_comment_link( $link , $comment, $args ) {
 	$args['page'] = get_page_of_comment( $comment->comment_ID, $args );
 
 	if ( $args['per_page'] ) {
-		if ( '' == $args['page'] )
+		if ( '' == $args['page'] ) {
 			$args['page'] = ( !empty($in_comment_loop) ) ? get_query_var('cpage') : get_page_of_comment( $comment->comment_ID, $args );
+		}
 
-		if ( $wp_rewrite->using_permalinks() )
+		if ( $wp_rewrite->using_permalinks() ) {
 			$link = user_trailingslashit( trailingslashit( get_permalink( $comment->comment_post_ID ) ) . 'comment-page-' . $args['page'], 'comment' );
-		else
+		} else {
 			$link = add_query_arg( 'cpage', $args['page'], get_permalink( $comment->comment_post_ID ) );
+		}
 	} else {
 		$link = get_permalink( $comment->comment_post_ID );
 	}

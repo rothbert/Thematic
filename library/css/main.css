@@ -14,15 +14,10 @@
  *    5.3 - Entry Content
  *    5.4 - Entry Utility
  *    5.5 - Galleries
- *    5.6 - Post Formats
- *    5.7 - Attachments
- *    5.8 - Post/Paging Navigation
- *    5.9 - Author Bio
- *    5.10 - Archives
- *    5.11 - Search Results/No posts
- *    5.12 - 404
- *    5.13 - Comments
- *    5.14 - Multisite
+ *    5.6 - Attachments
+ *    5.7 - Post/Paging Navigation
+ *    5.8 - Author Bio
+ *    5.9 - Comments
  *  6.0 - Sidebar
  *    6.1 - Widgets
  *  7.0 - Footer
@@ -172,6 +167,7 @@ address {
 
 abbr[title] {
 	border-bottom: 1px dotted #333;
+	cursor: help;
 }
 
 b,
@@ -224,6 +220,11 @@ q {
 	-ms-hyphens:     none;
 	hyphens:         none;
 	quotes: none;
+	font-size: 18px;
+	font-style: italic;
+	color: #666;
+	/* font-weight: 300; */
+	margin: 24px 40px; /* legacy was 0 3em */
 }
 
 blockquote:before,
@@ -232,14 +233,6 @@ q:before,
 q:after {
 	content: "";
 	content: none;
-}
-
-blockquote {
-	font-size: 18px;
-	font-style: italic;
-	color: #666;
-	/* font-weight: 300; */
-	margin: 24px 40px; /* legacy was 0 3em */
 }
 
 blockquote blockquote {
@@ -735,15 +728,16 @@ img.wp-smiley,
 @media (max-width: 999px) {	
 	
 	.site-content {
-		max-width: 40em;
+		max-width: 50em;
 		margin-left: auto;
 		margin-right: auto;
 	}
+
 	.main-aside,
 	.sub-aside {
 		margin-left: auto;
 		margin-right: auto;
-		max-width: 50em;
+		max-width: 57.143em;
 	}
 }
 
@@ -911,7 +905,6 @@ img.wp-smiley,
 	/* Small menu */
 	.menu-toggle {
 		cursor: pointer;
-		display: inline-block;
 		/* font: bold 16px/1.3 "Source Sans Pro", Helvetica, sans-serif; */
 		margin: 0;
 		padding: 12px 0 12px 20px;
@@ -948,9 +941,13 @@ img.wp-smiley,
 		display: block;
 		float: none;
 		position: relative;
-		padding-left: 1.5em;
+		padding-left: 0;
 		left: auto;
 		top: auto;
+	}
+
+	.toggled-on .sf-menu li li {
+		padding-left: 1.5em;
 	}
 
 	.toggled-on .sf-menu li > ul a {
@@ -1021,6 +1018,7 @@ img.wp-smiley,
 	.sf-menu li {
 		float:left;
 		position:relative;
+		display: block;
 	}
 	.sf-menu a {
 		display:block;
@@ -1359,13 +1357,9 @@ img.wp-smiley,
 	padding: 6px 6px 0;
 }
 
-/**
- * 5.6 Post Formats
- * ----------------------------------------------------------------------------
- */
 
 /**
- * 5.7 Attachments
+ * 5.6 Attachments
  * ----------------------------------------------------------------------------
  */
 
@@ -1392,7 +1386,7 @@ img.wp-smiley,
 
 
 /**
- * 5.8 Post/Paging Navigation
+ * 5.7 Post/Paging Navigation
  * ----------------------------------------------------------------------------
  */
 
@@ -1444,7 +1438,7 @@ img.wp-smiley,
 }
 
 /**
- * 5.9 Author Bio
+ * 5.8 Author Bio
  * ----------------------------------------------------------------------------
  */
 
@@ -1458,23 +1452,9 @@ img.wp-smiley,
     margin: .3em 1em 0 0;
 }
 
-/**
- * 5.10 Archives
- * ----------------------------------------------------------------------------
- */
 
 /**
- * 5.11 Search Results/No posts
- * ----------------------------------------------------------------------------
- */
-
-/**
- * 5.12 404
- * ----------------------------------------------------------------------------
- */
-
-/**
- * 5.13 Comments
+ * 5.9 Comments
  * ----------------------------------------------------------------------------
  */
 
@@ -1716,10 +1696,6 @@ img.wp-smiley,
     padding: 18px 0 0 0;
 }
 
-/**
- * 5.14 Multisite
- * ----------------------------------------------------------------------------
- */
 
 /**
  * 6.0 Sidebar
@@ -1964,11 +1940,11 @@ img.wp-smiley,
  * ----------------------------------------------------------------------------
  */
 
-.thematic-legacy .aside > ul {
+.thematic-xhtml .aside > ul {
 	list-style: none;
 	padding-left: 0;
 }
 
-.thematic-legacy .main-aside .widgetcontainer > ul {
+.thematic-xhtml .main-aside .widgetcontainer > ul {
 	padding-left: 20px;
 }

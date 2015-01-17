@@ -46,10 +46,10 @@ if ( function_exists( 'childtheme_override_html' ) )  {
 	function thematic_html( $class_att = FALSE ) {
 		$html_class = apply_filters( 'thematic_html_class' , $class_att );
 ?>
-<!--[if lt IE 7]><html class="<?php if ( $html_class ) echo( $html_class . ' ' ) ?>lt-ie9 lt-ie8 lt-ie7" <?php language_attributes() ?>><![endif]-->
-<!--[if IE 7]><html class="<?php 	if ( $html_class ) echo( $html_class . ' ' ) ?>ie7 lt-ie9 lt-ie8" ' <?php language_attributes() ?>><![endif]-->
-<!--[if IE 8]><html class="<?php 	if ( $html_class ) echo( $html_class . ' ' ) ?>ie8 lt-ie9" <?php language_attributes() ?>><![endif]-->
-<!--[if gt IE 8]><!--><html class="<?php 	if ( $html_class ) echo $html_class ?>" <?php language_attributes() ?>><!--<![endif]-->
+<!--[if lt IE 7]><html class="<?php if ( $html_class ) { echo( $html_class . ' ' ); } ?>lt-ie9 lt-ie8 lt-ie7" <?php language_attributes() ?>><![endif]-->
+<!--[if IE 7]><html class="<?php 	if ( $html_class ) { echo( $html_class . ' ' ); } ?>ie7 lt-ie9 lt-ie8" ' <?php language_attributes() ?>><![endif]-->
+<!--[if IE 8]><html class="<?php 	if ( $html_class ) { echo( $html_class . ' ' ); } ?>ie8 lt-ie9" <?php language_attributes() ?>><![endif]-->
+<!--[if gt IE 8]><!--><html class="<?php 	if ( $html_class ) { echo $html_class; } ?>" <?php language_attributes() ?>><!--<![endif]-->
 
 <?php
 	}
@@ -105,10 +105,13 @@ if ( function_exists( 'childtheme_override_meta_charset' ) ) {
  *
  */
 function thematic_meta_viewport() {
-	$viewport_content = apply_filters( 'thematic_meta_viewport_content', 'width=device-width' ); 
+	$viewport_content = apply_filters( 'thematic_meta_viewport_content', 'width=device-width,initial-scale=1' ); 
+
+	if( current_theme_supports( 'thematic_meta_viewport' ) ) {
 ?>
 <meta name="viewport" content="<?php echo $viewport_content ?>"/>
 <?php
+	}
 }
 
 
@@ -147,8 +150,9 @@ if ( function_exists( 'childtheme_override_doctitle' ) )  {
  */
 function thematic_wptitle( $wp_doctitle, $separator, $sep_location ) { 
 	// return original string if on feed or if a seo plugin is being used
-    if ( is_feed() || !thematic_seo() )
+    if ( is_feed() || !thematic_seo() ) {
     	return $wp_doctitle;
+	}
    	// otherwise...	
    	$site_name = get_bloginfo( 'name' , 'display' );
         	
@@ -416,7 +420,7 @@ function thematic_show_pingback() {
  * Filter: thematic_use_html5shiv
  * Filter: thematic_html5shiv_output
  * 
- * @since 2.0
+ * @since 2.0.0
  */
 function thematic_add_html5shiv() {
 	
@@ -435,7 +439,7 @@ function thematic_add_html5shiv() {
 	 * If a script with any of these handles is enqueued by a child theme or plugin, Thematic
 	 * will not add the html5 shiv.
 	 * 
-	 * @since 2.0
+	 * @since 2.0.0
 	 * 
 	 * @param  array  $possible_handles  Array of handle names
 	 */
@@ -443,8 +447,9 @@ function thematic_add_html5shiv() {
 	
 	// Check if any other scripts has been enqueued
 	foreach( $possible_handles as $handle) {
-		if( wp_script_is( $handle, 'queue' ) )
+		if( wp_script_is( $handle, 'queue' ) ) {
 			$use_shiv = false;
+		}
 	}
 	
 	/**
@@ -453,7 +458,7 @@ function thematic_add_html5shiv() {
 	 * Provides a shortcut to switch off the shiv. Defaults to true,
 	 * unless modernizr is detected.
 	 * 
-	 * @since 2.0
+	 * @since 2.0.0
 	 * 
 	 * @param  boolean  $use_shiv
 	 */
@@ -468,7 +473,7 @@ function thematic_add_html5shiv() {
 		/**
 		 * Filter the output string of the html5shiv link
 		 * 
-		 * @since 2.0
+		 * @since 2.0.0
 		 * 
 		 * @param  string  $content  The complete string that gets output to wp_head
 		 */
@@ -499,15 +504,18 @@ function thematic_create_stylesheet() {
 	$themeslug = get_stylesheet();
 	$template = wp_get_theme( 'thematic' );	
 	
+	$childtheme_style_dependencies = ( $theme == $template) ? array( 'thematic-main' ) : array();
+	
 	/**
 	 * Filter for specifying child theme stylesheet dependencies
 	 * 
 	 * @param array List of registered style handles
 	 */
-	$childtheme_style_dependencies = apply_filters( 'thematic_childtheme_style_dependencies', array( 'thematic-style1' ) );
+	$childtheme_style_dependencies = apply_filters( 'thematic_childtheme_style_dependencies', $childtheme_style_dependencies );
 	
+	wp_register_style( 'thematic-legacy', get_template_directory_uri() . '/library/css/legacy.css', array(), $template->Version );
 	wp_register_style( 'genericons', get_template_directory_uri() . '/library/css/genericons.css', array(), '3.0.2' );
-	wp_register_style( 'thematic-style1', get_template_directory_uri() . '/library/css/style1.css', array(), $template->Version );
+	wp_register_style( 'thematic-main', get_template_directory_uri() . '/library/css/main.css', array(), $template->Version );
 	
 	wp_enqueue_style( "{$themeslug}", get_stylesheet_uri(), $childtheme_style_dependencies, $theme->Version );
 }
@@ -532,14 +540,15 @@ if ( function_exists( 'childtheme_override_head_scripts' ) )  {
      *
      * For Reference: {@link http://users.tpg.com.au/j_birch/plugins/superfish/#getting-started Superfish Jquery Plugin}
      *
-     * @since 1.0
+     * @since 1.0.0
      */
     function thematic_head_scripts() {
 		$template = wp_get_theme( 'thematic' );
 
 		// load comment reply script on posts and pages when option is set and check for deprecated filter
-		if ( is_singular() && comments_open() && get_option( 'thread_comments' ) )
+		if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 			has_filter( 'thematic_show_commentreply' ) ? thematic_show_commentreply() : wp_enqueue_script( 'comment-reply' );
+		}
 
 		// load jquery and superfish associated plugins when theme support is active
 		if ( current_theme_supports( 'thematic_superfish' ) ) {
@@ -569,7 +578,7 @@ if ( function_exists( 'childtheme_override_head_scripts' ) )  {
 		/**
 		 * Filter the variables sent to wp_localize_script
 		 * 
-		 * @since 2.0
+		 * @since 2.0.0
 		 * 
 		 * @param array $thematic_javascript_options
 		 */
@@ -746,7 +755,7 @@ if ( function_exists( 'childtheme_override_blogtitle' ) )  {
     function thematic_blogtitle() { 
     ?>
     
-    	<div id="blog-title" class="site-title"><span><a href="<?php echo home_url() ?>/" title="<?php bloginfo('name') ?>" rel="home"><?php bloginfo('name') ?></a></span></div>
+    	<div id="blog-title" class="site-title"><span><a href="<?php echo home_url() ?>/" rel="home"><?php bloginfo('name') ?></a></span></div>
     
     <?php 
     }
@@ -820,7 +829,7 @@ if ( function_exists( 'childtheme_override_access' ) )  {
     
     <div id="access" role="navigation">
     	<h3 class="menu-toggle"><?php echo apply_filters( 'thematic_mobile_navigation_buttontext', _x( 'Menu', 'Mobile navigation button', 'thematic' ) ); ?></h3>
-    	<div class=""><a class="skip-link screen-reader-text" href="#content" title="<?php esc_attr_e( 'Skip navigation to the content', 'thematic' ); ?>"><?php _e( 'Skip to content', 'thematic' ); ?></a></div><!-- .skip-link -->
+    	<div class=""><a class="skip-link screen-reader-text" href="#content"><?php _e( 'Skip to content', 'thematic' ); ?></a></div><!-- .skip-link -->
     	
     	<?php 
     	if ( ( function_exists( 'has_nav_menu' ) ) && ( has_nav_menu( apply_filters( 'thematic_primary_menu_id', 'primary-menu' ) ) ) ) {

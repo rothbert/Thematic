@@ -16,17 +16,10 @@ class TestLegacyOverridesXTHML extends Thematic_UnitTestCase {
 		include_once 'childtheme-overrides.php';
 		
 		/* Load the legacy files before anything else - needed for childtheme_overrides* to work */
-		include_once '../legacy/deprecated.php';
-		include_once '../legacy/legacy.php';
-		
+		include_legacy_xhtml_files();
+
 		/* Load the thematic files */
 		parent::setUp();
-		
-		/* Set the option to use legacy mode */
-		$this->theme_options = $this->get_test_options( 'thematic_theme_opt' );
-		$this->theme_options['legacy_xhtml'] = '1';
-		
-		$this->update_test_options( 'thematic_theme_opt', $this->theme_options );
 		
 		/* Create and setup a loop for testing */
 		$post_ids = $this->factory->post->create_many( 10 );

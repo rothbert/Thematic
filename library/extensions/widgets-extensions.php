@@ -278,13 +278,7 @@ function thematic_widgets_init() {
 		register_sidebar( $thematic_widgetized_areas[$key]['args'] );
 	}  
 	
-	// Remove WP default Widgets
-	// WP 2.8 function using $widget_class
-    unregister_widget( 'WP_Widget_Meta' );
-    unregister_widget( 'WP_Widget_Search' );
-
 	// Finished intializing Widgets plugin, now let's load the thematic default widgets
-	register_widget( 'Thematic_Widget_Search' );
 	register_widget( 'Thematic_Widget_Meta' );
 	register_widget( 'Thematic_Widget_RSSlinks' );
 
@@ -346,8 +340,9 @@ function thematic_connect_functions() {
 	$thematic_widgetized_areas = thematic_widgets_array();
 
 	foreach ( $thematic_widgetized_areas as $key => $value ) {
-		if ( !has_action( $thematic_widgetized_areas[$key]['action_hook'], $thematic_widgetized_areas[$key]['function'] ) )
+		if ( !has_action( $thematic_widgetized_areas[$key]['action_hook'], $thematic_widgetized_areas[$key]['function'] ) ) {
 			add_action( $thematic_widgetized_areas[$key]['action_hook'], $thematic_widgetized_areas[$key]['function'], $thematic_widgetized_areas[$key]['priority'] );	
+		}
 	}
 
 }

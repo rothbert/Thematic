@@ -340,7 +340,9 @@ if (function_exists('childtheme_override_page_title'))  {
 				$content .= ' <span>' . single_cat_title('', FALSE) .'</span>';
 				$content .= '</h1>' . "\n";
 				$content .= "\n\t\t\t\t" . '<div class="archive-meta">';
-				if ( !(''== category_description()) ) : $content .= apply_filters('archive_meta', category_description()); endif;
+				if ( !(''== category_description()) ) { 
+					$content .= apply_filters('archive_meta', category_description()); 
+				}
 				$content .= '</div>';
 		} elseif (is_search()) {
 				$content .= '<h1 class="page-title">';
@@ -882,10 +884,9 @@ if (function_exists('childtheme_override_postheader_posteditlink'))  {
 	 */
 	function thematic_postheader_posteditlink() {
 
-    	$posteditlink = sprintf( '<a href="%s" title="%s" class="edit">%s</a>' , 
+    	$posteditlink = sprintf( '<a href="%s" class="edit">%s</a>' , 
 
 			    			get_edit_post_link(),
-			    			esc_attr__('Edit post', 'thematic'),
 							/* translators: post edit link */
 			    			__('Edit', 'thematic'));
 		
@@ -912,8 +913,9 @@ if (function_exists('childtheme_override_postheader_posttitle'))  {
 	function thematic_postheader_posttitle() {
 		$posttitle = "\n\n\t\t\t\t\t";
 		
-		if ( !$title_content = get_the_title() )  
+		if ( !$title_content = get_the_title() )  {
 			$title_content = '<a href="' . get_permalink() . '">' . _x('(Untitled)', 'Default title for untitled posts', 'thematic') . '</a>';
+		}
 	    
 	    if (is_single() || is_page()) {
 	        $posttitle .= '<h1 class="entry-title">' . $title_content . "</h1>\n";
@@ -921,9 +923,8 @@ if (function_exists('childtheme_override_postheader_posttitle'))  {
 	        $posttitle .= '<h1 class="entry-title">' . __('Not Found', 'thematic') . "</h1>\n";
 	    } else {
 	        $posttitle .= '<h1 class="entry-title">';
-	        $posttitle .= sprintf('<a href="%s" title="%s" rel="bookmark">%s</a>',
+	        $posttitle .= sprintf('<a href="%s" rel="bookmark">%s</a>',
 	        						apply_filters('the_permalink', get_permalink()),
-									sprintf( esc_attr__('Permalink to %s', 'thematic'), the_title_attribute( 'echo=0' ) ),
 	        						$title_content
 	        						);   
 	        $posttitle .= "</h1>\n";
@@ -992,10 +993,8 @@ if (function_exists('childtheme_override_postmeta_authorlink'))  {
 	    	$author_info .= '</span></span>';
 	    } else {
 	    	$author_info  = '<span class="author vcard">';
-	    	$author_info .= sprintf('<a class="url fn n" href="%s" title="%s">%s</a>',
+	    	$author_info .= sprintf('<a class="url fn n" href="%s">%s</a>',
 	    							get_author_posts_url( $authordata->ID, $authordata->user_nicename ),
-									/* translators: author name */
-	    							sprintf( esc_attr__( 'View all posts by %s', 'thematic' ), get_the_author_meta( 'display_name' ) ),
 	    							get_the_author_meta( 'display_name' ));
 	    	$author_info .= '</span>';
 	    }
@@ -1144,9 +1143,8 @@ if (function_exists('childtheme_override_content'))  {
 				$size = apply_filters( 'thematic_post_thumb_size' , array(100,100) );
 				$attr = apply_filters( 'thematic_post_thumb_attr', array('title'	=> sprintf( esc_attr__('Permalink to %s', 'thematic'), the_title_attribute( 'echo=0' ) ) ) );
 				if ( has_post_thumbnail() ) {
-					$post = sprintf('<a class="entry-thumb" href="%s" title="%s">%s</a>',
+					$post = sprintf('<a class="entry-thumb" href="%s">%s</a>',
 									get_permalink() ,
-									sprintf( esc_attr__('Permalink to %s', 'thematic'), the_title_attribute( 'echo=0' ) ),
 									get_the_post_thumbnail(get_the_ID(), $size, $attr)) . $post;
 					}
 			}
@@ -1371,14 +1369,15 @@ if (function_exists('childtheme_override_postfooter'))  {
 		
 					/* translators: %s is custom post type singular name, wrapped in link tags */
 					$postfooter .= sprintf( __( 'Browse the %s archive.', 'thematic' ), 
-					/* translators: %s is custom post type singular name */
-					' <a href="' . $post_type_archive_link . '" title="' . sprintf( esc_attr__( 'Permalink to %s Archive', 'thematic' ), $post_type_obj->labels->singular_name )  . '">' . $post_type_obj->labels->singular_name . '</a>'
+					' <a href="' . $post_type_archive_link . '">' . $post_type_obj->labels->singular_name . '</a>'
 					);
 					$postfooter .= ' ';
 
 	        	}
 	        	$postfooter .= thematic_postfooter_posttax();
-	    		$postfooter .= sprintf( _x('Bookmark the %1$spermalink%2$s.', '1s and 2s are the a href link wrappers, do not reverse them', 'thematic'), sprintf('<a title="%s" href="%s">', sprintf( esc_attr__('Permalink to %s', 'thematic'), the_title_attribute( 'echo=0' ) ), apply_filters('the_permalink', get_permalink())) , '</a>') . ' ';
+	    		$postfooter .= sprintf( _x('Bookmark the %1$spermalink%2$s.', '1s and 2s are the a href link wrappers, do not reverse them', 'thematic'), 
+										sprintf('<a href="%s">', apply_filters('the_permalink', get_permalink())) , '</a>'
+								) . ' ';
 
 	    			if ( post_type_supports( $post_type, 'comments') ) {
 	            		$postfooter .= thematic_postfooter_postconnect();
@@ -1418,9 +1417,8 @@ if (function_exists('childtheme_override_postfooter_posteditlink'))  {
 	 */
 	function thematic_postfooter_posteditlink() {
 
-	    $posteditlink = sprintf( '<a href="%s" title="%s" class="edit">%s</a>' , 
+	    $posteditlink = sprintf( '<a href="%s" class="edit">%s</a>' , 
 			    			get_edit_post_link(),
-			    			esc_attr__('Edit post', 'thematic'),
 							/* translators: post edit link */
 			    			__('Edit', 'thematic'));
 
@@ -1487,7 +1485,9 @@ if (function_exists('childtheme_override_postfooter_postterms'))  {
 	function thematic_postfooter_postterms($tax) {
 		global $post;
 		
-		if ($tax == 'post_format') return;
+		if ($tax == 'post_format') {
+			return;
+		}
 		$tax_terms = '';	
 		$tax_obj = get_taxonomy($tax);
 		
@@ -1613,15 +1613,13 @@ if (function_exists('childtheme_override_postfooter_postcomments'))  {
 	        $postcommentnumber = get_comments_number();
 
 	        if ($postcommentnumber > '0') {
-	        	$postcomments = sprintf('<span class="comments-link"><a href="%s" title="%s" rel="bookmark">%s</a></span>',
+	        	$postcomments = sprintf('<span class="comments-link"><a href="%s" rel="bookmark">%s</a></span>',
 	        						apply_filters('the_permalink', get_permalink()) . '#respond',
-	        						sprintf( esc_attr__('Comment on %s', 'thematic'), the_title_attribute( 'echo=0' ) ),
 									/* translators: number of comments and trackbacks */
 	        						sprintf( _n('%s Response', '%s Responses', $postcommentnumber, 'thematic'), number_format_i18n( $postcommentnumber ) ) );
 			} else {
-	            $postcomments = sprintf('<span class="comments-link"><a href="%s" title="%s" rel="bookmark">%s</a></span>',
+	            $postcomments = sprintf('<span class="comments-link"><a href="%s" rel="bookmark">%s</a></span>',
 	        						apply_filters('the_permalink', get_permalink()) . '#respond',
-	        						sprintf( esc_attr__('Comment on %s', 'thematic'), the_title_attribute( 'echo=0' ) ),
 	        						__('Leave a comment', 'thematic'));
 	        }
 	    } else {
@@ -1650,22 +1648,20 @@ if (function_exists('childtheme_override_postfooter_postconnect'))  {
     
 	    if ((comments_open()) && (pings_open())) { /* Comments are open */
 	        $postconnect = sprintf( _x('%1$sPost a comment%2$s or leave a trackback: %3$s', '1s and 2s are the a href link wrappers, do not reverse them. 3s is trackback url.', 'thematic'), 
-								sprintf('<a class="comment-link" title="%s" href="#respond">', esc_attr__('Post a comment', 'thematic')), 
+								'<a class="comment-link" href="#respond">', 
 								'</a>' ,
-								sprintf('<a class="trackback-link" href="%s" title ="%s" rel="trackback">%s</a>.', 
+								sprintf('<a class="trackback-link" href="%s" rel="trackback">%s</a>.', 
 									get_trackback_url(),
-									esc_attr__('Trackback URL for your post', 'thematic'),
 						 			__('Trackback URL', 'thematic'))
 							);
 	    } elseif (!(comments_open()) && (pings_open())) { /* Only trackbacks are open */
 	        $postconnect = sprintf( _x('Comments are closed, but you can leave a trackback: %s', '%s is trackback url, wrapped in link tags', 'thematic'),
-							sprintf('<a class="trackback-link" href="%s" title="%s" rel="trackback">%s</a>.', 
+							sprintf('<a class="trackback-link" href="%s" rel="trackback">%s</a>.', 
 								get_trackback_url(), 
-								esc_attr__('Trackback URL for your post', 'thematic'), 
 								__('Trackback URL', 'thematic'))
 							);
 	    } elseif ((comments_open()) && !(pings_open())) { /* Only comments open */
-	        $postconnect = sprintf( _x('Trackbacks are closed, but you can %1$spost a comment%2$s.', '1s and 2s are the a href link wrappers, do not reverse them', 'thematic'), sprintf('<a class="comment-link" title="%s" href="#respond">', esc_attr__('Post a comment', 'thematic')), '</a>');
+	        $postconnect = sprintf( _x('Trackbacks are closed, but you can %1$spost a comment%2$s.', '1s and 2s are the a href link wrappers, do not reverse them', 'thematic'), '<a class="comment-link" href="#respond">', '</a>');
 	    } elseif (!(comments_open()) && !(pings_open())) { /* Comments and trackbacks closed */
 	        $postconnect = __('Both comments and trackbacks are currently closed.', 'thematic');
 	    }

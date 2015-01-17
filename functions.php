@@ -16,9 +16,19 @@
 
 
 /**
+ * Thematic only works in WordPress 3.6 or later.
+ * 
+ * @since Thematic 2.0.0
+ */
+if ( version_compare( $GLOBALS['wp_version'], '3.6-alpha', '<' ) ) {
+	require get_template_directory() . '/library/extensions/back-compat.php';
+}
+
+
+/**
  * Registers action hook: thematic_init 
  * 
- * @since Thematic 1.0
+ * @since 1.0.0
  */
 function thematic_init() {
 	do_action('thematic_init');
@@ -30,7 +40,7 @@ function thematic_init() {
  *
  * Override: childtheme_override_theme_setup
  *
- * @since Thematic 1.0
+ * @since 1.0.0
  */
 if ( function_exists('childtheme_override_theme_setup') ) {
 	/**
@@ -44,7 +54,7 @@ if ( function_exists('childtheme_override_theme_setup') ) {
 	 * thematic_theme_setup
 	 *
 	 * @todo review for impact of deprecations on child themes & fix comment blocks?
-	 * @since Thematic 1.0?
+	 * @since 1.0.0?
 	 */
 	function thematic_theme_setup() {
 		global $content_width;
@@ -55,24 +65,25 @@ if ( function_exists('childtheme_override_theme_setup') ) {
 		 * Used to set the width of images and content. Should be equal to the width the theme
 		 * is designed for, generally via the style.css stylesheet.
 		 *
-		 * @since Thematic 1.0
+		 * @since 1.0.0
 		 */
-		if ( !isset($content_width) )
+		if ( !isset($content_width) ) {
 			$content_width = 600;
+		}
 		
 		// Check for MultiSite
 		define( 'THEMATIC_MB', is_multisite()  );
 
 		// Create the feedlinks
-		if ( ! current_theme_supports( 'thematic_legacy_feedlinks' ) )
- 			add_theme_support( 'automatic-feed-links' );
+		if ( ! current_theme_supports( 'thematic_legacy_feedlinks' ) ) {
+			add_theme_support( 'automatic-feed-links' );
+		}
  
-		if ( apply_filters( 'thematic_post_thumbs', true ) )
+		if ( apply_filters( 'thematic_post_thumbs', true ) ) {
 			add_theme_support( 'post-thumbnails' );
+		}
  
 		add_theme_support( 'thematic_superfish' );
-		
-		add_theme_support( 'thematic_meta_viewport' );
 		
 		// Path constants
 		define( 'THEMATIC_LIB',  get_template_directory() .  '/library' );
@@ -88,10 +99,15 @@ if ( function_exists('childtheme_override_theme_setup') ) {
 		
 		// Load overrides to activate the old xhtml markup if set
 		if ( !is_admin() && thematic_is_legacy_xhtml() ) {
-			add_theme_support( 'thematic_legacy' );
 			require_once ( THEMATIC_LIB . '/legacy/legacy.php' );
 		}
 		
+		// Add functionality only when not using old xhtml markup
+		if( !thematic_is_legacy_xhtml() ) {
+			add_theme_support( 'thematic_meta_viewport' );
+			add_theme_support('thematic_customizer_layout');
+		}
+
 		// Load widgets
 		require_once ( THEMATIC_LIB . '/extensions/widgets.php' );
 
@@ -138,16 +154,18 @@ if ( function_exists('childtheme_override_theme_setup') ) {
 		function thematic_remove_generators() {
  			return '';
  		}
- 		if ( apply_filters( 'thematic_hide_generators', true ) )
+ 		if ( apply_filters( 'thematic_hide_generators', true ) ) {
  			add_filter( 'the_generator', 'thematic_remove_generators' );
+		}
  
 		// Translate, if applicable
 		load_theme_textdomain( 'thematic', THEMATIC_LIB . '/languages' );
 
 		$locale = get_locale();
 		$locale_file = THEMATIC_LIB . "/languages/$locale.php";
-		if ( is_readable($locale_file) )
+		if ( is_readable($locale_file) ) {
 			require_once ($locale_file);
+		}
 	}
 }
 
@@ -157,7 +175,7 @@ add_action('after_setup_theme', 'thematic_theme_setup', 10);
 /**
  * Registers action hook: thematic_child_init
  * 
- * @since Thematic 1.0
+ * @since 1.0.0
  */
 function thematic_child_init() {
 	do_action('thematic_child_init');

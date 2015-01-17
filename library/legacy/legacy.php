@@ -1,6 +1,8 @@
 <?php
 /**
  * Legacy Fucntionality
+ * 
+ * @since 2.0.0
  *
  * @package ThematicLegacy
  */
@@ -8,14 +10,14 @@
 /**
  * Load legacy template files when needed
  * 
- * @since 2.0
+ * @since 2.0.0
  */
 function thematic_load_legacy_template_files( $template ) {
 		
 	if( is_attachment() )
 		$template = THEMATIC_LIB . '/legacy/legacy-attachment.php';
 		
-	if( is_page() )
+	if( is_page() && ! is_page_template() )
 		$template = THEMATIC_LIB . '/legacy/legacy-page.php';
 		
 	if( is_page_template( 'links.php' ) )
@@ -80,20 +82,130 @@ if ( !function_exists( 'childtheme_override_meta_charset' ) ) {
 
 
 /**
- *  Remove style dependencies from legacy child stylesheet 
+ * Add filter to wp_list_comments arguments to use xhtml comments callback
+ * 
+ * @since 2.0.0
+ * 
+ * @param $content array Previous arguments
+ * @return $content array Array with new arguments
+ */
+function thematic_comments_arg_xhtml( $content ) {
+	$content[ 'callback' ] = 'thematic_comments_xhtml';
+	return $content;
+}
+add_filter( 'thematic_list_comments_arg', 'thematic_comments_arg_xhtml' );
+
+
+/**
+ * Custom callback function to list comments in the Thematic style. 
+ * 
+ * Used in legacy xhtml mode
+ * 
+ * @since 2.0.0
+ *
+ * @param object $comment 
+ * @param array $args 
+ * @param int $depth 
+ */
+function thematic_comments_xhtml($comment, $args, $depth) {
+    $GLOBALS['comment'] = $comment;
+	$GLOBALS['comment_depth'] = $depth;
+?>
+    
+       	<li id="comment-<?php comment_ID() ?>" <?php comment_class() ?>>
+    	
+    		<?php 
+    			// action hook for inserting content above #comment
+    			thematic_abovecomment();
+    		?>
+    		
+    		<div class="comment-author vcard"><?php thematic_commenter_link() ?></div>
+    		
+    			<?php thematic_commentmeta(TRUE); ?>
+    		
+    			<?php  
+    				if ( $comment->comment_approved == '0' ) {
+    					echo "\t\t\t\t\t" . '<span class="unapproved">';
+    					_e( 'Your comment is awaiting moderation', 'thematic' );
+    					echo ".</span>\n";
+    				}
+    			?>
+    			
+            <div class="comment-content">
+            
+        		<?php comment_text() ?>
+        		
+    		</div>
+    		
+			<?php // echo the comment reply link with help from Justin Tadlock http://justintadlock.com/ and Will Norris http://willnorris.com/
+				
+				if( $args['type'] == 'all' || get_comment_type() == 'comment' ) :
+					comment_reply_link( array_merge( $args, array(
+						'reply_text' => __( 'Reply','thematic' ), 
+						'login_text' => __( 'Log in to reply.','thematic' ),
+						'depth'      => $depth,
+						'before'     => '<div class="comment-reply-link">', 
+						'after'      => '</div>'
+					)));
+				endif;
+			?>
+			
+			<?php
+				// action hook for inserting content above #comment
+				thematic_belowcomment() 
+			?>
+
+<?php }
+
+
+/**
+ *  Specify style dependencies when legacy mode is activated
  *  
- *  @since 2.0
+ *  @since 2.0.0
  */
 function thematic_legacy_style_dependency( $dependencies ) {
-	return array( );
-}
-add_filter( 'thematic_childtheme_style_dependencies', 'thematic_legacy_style_dependency' );
 
+	$theme = wp_get_theme();
+	$template = wp_get_theme( 'thematic' );
+
+	// enqueue legacy stylesheet when Thematic is used as active theme
+	$childtheme_style_dependencies = ( $theme == $template) ? array( 'thematic-legacy' ) : array();
+
+	return $childtheme_style_dependencies;
+}
+add_filter( 'thematic_childtheme_style_dependencies', 'thematic_legacy_style_dependency', 9 );
+
+
+if ( !function_exists( 'childtheme_override_head' ) ) {
+	/**
+	 * @ignore
+	 */
+	function childtheme_override_commentmeta() {
+		$content = '<div class="comment-meta">' . 
+					sprintf( _x('Posted %s at %s', 'Posted {$date} at {$time}', 'thematic') , 
+						get_comment_date(),
+						get_comment_time() );
+
+		$content .= ' <span class="meta-sep">|</span> ' . sprintf( '<a href="%1$s" title="%2$s">%3$s</a>', '#comment-' . get_comment_ID() , __( 'Permalink to this comment', 'thematic' ), __( 'Permalink', 'thematic' ) );
+							
+		if ( get_edit_comment_link() ) {
+			$content .=	sprintf(' <span class="meta-sep">|</span><span class="edit-link"> <a class="comment-edit-link" href="%1$s" title="%2$s">%3$s</a></span>',
+						get_edit_comment_link(),
+						__( 'Edit comment' , 'thematic' ),
+						__( 'Edit', 'thematic' ) );
+			}
+		
+		$content .= '</div>' . "\n";
+			
+		return $print ? print(apply_filters('thematic_commentmeta', $content)) : apply_filters('thematic_commentmeta', $content);
+	
+	}
+}
 
 /**
  * Remove the html5shiv markup
  * 
- * @since 2.0
+ * @since 2.0.0
  * 
  * @return bool false
  */
@@ -105,6 +217,8 @@ add_filter( 'thematic_use_html5shiv', 'thematic_xhtml_remove_shiv' );
 
 /**
  * Filter .site-header opening tag to xhtml
+ * 
+ * @since 2.0.0
  */
 function thematic_open_header_xhtml( $content ) {
 	$content = '<div id="header" class="site-header">';
@@ -115,6 +229,8 @@ add_filter( 'thematic_open_header', 'thematic_open_header_xhtml' );
 
 /**
  * Filter .site-header closing tag to xhtml
+ * 
+ * @since 2.0.0
  */
 function thematic_close_header_xhtml( $content ) {
 	$content = '</div><!-- .site-header-->';
@@ -125,6 +241,8 @@ add_filter( 'thematic_close_header', 'thematic_close_header_xhtml' );
 
 /**
  * Filter the main menu to use div tag
+ * 
+ * @since 2.0.0
  */
 function thematic_navmenu_args_xhtml( $args ) {
 	$args[ 'container' ] = 'div';
@@ -169,7 +287,7 @@ if ( !function_exists( 'childtheme_override_nav_above' ) )  {
 /**
  * Replace the loops with xhtml versions
  * 
- * @since 2.0
+ * @since 2.0.0
  */
 function thematic_replace_loops() {
 	// replace the archive loop
@@ -217,12 +335,16 @@ function thematic_replace_loops() {
 }
 add_action( 'init', 'thematic_replace_loops' );
 
+
 /**
  * The default xhtml loop
+ * 
+ * @since 2.0.0
  */
 function thematic_default_loop_xhtml() {
-	if ( is_author() ) 
+	if ( is_author() ) {
 		rewind_posts();
+	}
 		
 	while ( have_posts() ) : the_post(); 
 
@@ -258,6 +380,8 @@ function thematic_default_loop_xhtml() {
 
 /**
  * The index xhtml loop
+ * 
+ * @since 2.0.0
  */
 function thematic_index_loop_xhtml() {
 	// Count the number of posts so we can insert a widgetized area
@@ -305,6 +429,8 @@ function thematic_index_loop_xhtml() {
 
 /**
  * The single posts xhtml loop
+ * 
+ * @since 2.0.0
  */
 function thematic_single_post_xhtml() {	
 			// action hook for insterting content above #post
@@ -339,6 +465,8 @@ function thematic_single_post_xhtml() {
 
 /**
  * Filter thematic_postheader to remove the <header> element
+ * 
+ * @since 2.0.0
  */
 function thematic_postheader_xhtml( $content ) {
 	$content = str_replace( '<header class="entry-header">', '', $content);
@@ -350,6 +478,8 @@ add_filter( 'thematic_postheader', 'thematic_postheader_xhtml' );
 
 /**
  * Filter thematic_postheader_posttitle to use <h2> tags
+ * 
+ * @since 2.0.0
  */
 function thematic_postheader_posttitle_xhtml( $content ) {
 	if ( !is_single() || !is_page() || !is_404() ) {
@@ -363,6 +493,8 @@ add_filter( 'thematic_postheader_posttitle', 'thematic_postheader_posttitle_xhtm
 
 /**
  * Filter thematic_postfooter to use <div> tag
+ * 
+ * @since 2.0.0
  */
 function thematic_postfooter_xhtml( $content ) {
 	$content = str_replace( '<footer class="entry-utility">', '<div class="entry-utility">', $content);
@@ -374,6 +506,8 @@ add_filter( 'thematic_postfooter', 'thematic_postfooter_xhtml' );
 
 /**
  * Filter wp_link_pages_args to use <div> tags
+ * 
+ * @since 2.0.0
  */
 function thematic_link_pages_args_xhtml( $args ) {
 	$args['before'] = sprintf( '<div class="page-link">%s', __( 'Pages:', 'thematic' ) ); 
@@ -419,6 +553,8 @@ if ( !function_exists( 'childtheme_override_nav_below' ) ) {
 
 /**
  * Filter the thematic_before_widget_area to use div tags
+ * 
+ * @since 2.0.0
  */
 function thematic_xhtml_before_widget_area( $content ) {
 	$content = str_replace( '<aside', '<div ', $content);
@@ -430,6 +566,8 @@ add_filter( 'thematic_before_widget_area', 'thematic_xhtml_before_widget_area' )
 
 /**
  * Filter the thematic_after_widget_area to use div tags
+ * 
+ * @since 2.0.0
  */
 function thematic_xhtml_after_widget_area( $content ) {
 	$content = str_replace( '</aside>', '</div>', $content);
@@ -441,6 +579,8 @@ add_filter( 'thematic_after_widget_area', 'thematic_xhtml_after_widget_area' );
 
 /**
  * Filter the thematic_before_widget to use li tags
+ * 
+ * @since 2.0.0
  */
 function thematic_xhtml_before_widget( $content ) {
 	$content = '<li id="%1$s" class="widgetcontainer %2$s">';
@@ -451,6 +591,8 @@ add_filter( 'thematic_before_widget', 'thematic_xhtml_before_widget' );
 
 /**
  * Filter the thematic_after_widget to use li tags
+ * 
+ * @since 2.0.0
  */
 function thematic_xhtml_after_widget( $content ) {
 	$content = '</li>';
@@ -461,6 +603,8 @@ add_filter( 'thematic_after_widget', 'thematic_xhtml_after_widget' );
 
 /**
  * Filter the thematic_before_title to use h3 tags
+ * 
+ * @since 2.0.0
  */
 function thematic_xhtml_before_title( $content ) {
 	$content = '<h3 class="widgettitle">';
@@ -471,6 +615,8 @@ add_filter( 'thematic_before_title', 'thematic_xhtml_before_title' );
 
 /**
  * Filter the thematic_after_title to use h3 tags
+ * 
+ * @since 2.0.0
  */
 function thematic_xhtml_after_title( $content ) {
 	$content = "</h3>\n";
@@ -481,6 +627,8 @@ add_filter( 'thematic_after_title', 'thematic_xhtml_after_title' );
 
 /**
  * Filter .site-footer opening tag to xhtml
+ * 
+ * @since 2.0.0
  */
 function thematic_open_footer_xhtml( $content ) {
 	$content = '<div id="footer" class="site-footer">';
@@ -491,6 +639,8 @@ add_filter( 'thematic_open_footer', 'thematic_open_footer_xhtml' );
 
 /**
  * Filter .site-footer closing tag to xhtml
+ * 
+ * @since 2.0.0
  */
 function thematic_close_footer_xhtml( $content ) {
 	$content = '</div><!-- .site-footer -->';

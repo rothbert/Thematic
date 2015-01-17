@@ -18,7 +18,7 @@
  * 
  * Override: childtheme_override_opt_init
  *
- * @since Thematic 1.0
+ * @since 1.0.0
  */
 if (function_exists('childtheme_override_opt_init')) {
 	function thematic_opt_init() {
@@ -31,29 +31,20 @@ if (function_exists('childtheme_override_opt_init')) {
 		$current_options = thematic_get_wp_opt('thematic_theme_opt');
 		$legacy_options = thematic_convert_legacy_opt();
 		
-		// If no current settings exist
-		if ( false === $current_options )  {
-			// Check for legacy options
-			if ( false !== ( $legacy_options ) )  {
-				// Theme upgrade: Convert legacy to current format and add to database 
-				add_option( 'thematic_theme_opt', $legacy_options );
-			} else {
-				// Fresh theme installation: Add default settings to database
-				add_option( 'thematic_theme_opt', thematic_default_opt() );
-			}
+
+		// Check for pre-1.0 options
+		if ( false !== ( $legacy_options ) )  {
+			// Theme upgrade: Convert legacy to current format and add to database
+			add_option( 'thematic_theme_opt', $legacy_options );
 		}
+
 		
 		// If we are missing a 2.0 option, this is an upgrade from previous version
-		if ( !isset( $current_options['layout'] ) ) {
-			$thematic_upgrade_opt = array(
-				'index_insert' 	=> 2,
-				'author_info'  	=> 0, // 0 = not checked 1 = checked
-				'footer_txt' 	=> 'Powered by [wp-link]. Built on the [theme-link].',
-				'del_legacy_opt'=> 0, // 0 = not checked 1 = check
-				'legacy_xhtml'	=> 1,  // 0 = not checked 1 = check
-				'layout'        => 'right-sidebar'
-			);
-			update_option( 'thematic_theme_opt', $thematic_upgrade_opt );
+		if ( !isset( $current_options['layout'] ) && isset( $current_options['footer_txt'] ) ) {
+			$current_options = wp_parse_args( $current_options, thematic_default_opt() );
+			// enable xhtml mode by default on theme upgrades
+			$current_options['legacy_xhtml'] = 1;
+			update_option( 'thematic_theme_opt', $current_options );
 		}
 		
 		register_setting ('thematic_opt_group', 'thematic_theme_opt', 'thematic_validate_opt');
@@ -69,7 +60,7 @@ if (function_exists('childtheme_override_opt_init')) {
 		 * 
 		 * @param bool true
 		 */
-		if( apply_filters( 'thematic_show_legacymode_checkbox', true ) ) {
+		if( apply_filters( 'thematic_show_legacymode_checkbox', false ) ) {
 			// show check box option for restoring legacy xtml1.0 doctype and compatible markup
 			add_settings_field ('thematic_legacy_xhtml_opt', __('Restore Legacy XHTML1.0 Doctype'	, 'thematic'), 'thematic_do_legacy_xhtml_opt'	, 'thematic_theme_opt', 'thematic_opt_section_main');
 		}
@@ -91,7 +82,7 @@ add_action ('admin_init', 'thematic_opt_init');
  * Returns an option's value from wp_otions table in database
  * or returns false if no value is found for that row 
  *
- * @since Thematic 1.0
+ * @since 1.0.0
  */
 function thematic_get_wp_opt( $option_name, $default = false ) {
 	global $blog_id;
@@ -111,21 +102,22 @@ function thematic_get_wp_opt( $option_name, $default = false ) {
  * or returns false if no value is found
  *
  * @uses thematic_get_wp_opt()
- * @since Thematic 1.0
+ * @since 1.0.0
  */
 function thematic_get_theme_opt( $opt_key, $echo = false ) {
 	
-	$theme_opt = thematic_get_wp_opt( 'thematic_theme_opt' );
+	$theme_opt =  wp_parse_args( thematic_get_wp_opt( 'thematic_theme_opt', array() ), thematic_default_opt() );
 	
-	if ( isset( $theme_opt[$opt_key] ) ) {
-		if ( false === $echo ) {
-			return $theme_opt[$opt_key] ;
-		} else { 
-			echo $theme_opt[$opt_key];
-		}
-	} else {
+	if ( !isset( $theme_opt[$opt_key] ) ) {
 		return false;
 	}
+
+	if ( false === $echo ) {
+		return $theme_opt[$opt_key];
+	} else {
+		echo $theme_opt[$opt_key];
+	}
+
 }
 
 
@@ -135,7 +127,7 @@ function thematic_get_theme_opt( $opt_key, $echo = false ) {
  *
  * @uses thematic_theme_convert_legacy_opt
  * 
- * @since Thematic 1.0
+ * @since 1.0.0
  */
 function thematic_convert_legacy_opt() {
     $thm_insert_position = thematic_get_wp_opt( 'thm_insert_position' );
@@ -143,16 +135,19 @@ function thematic_convert_legacy_opt() {
     $thm_footertext = thematic_get_wp_opt( 'thm_footertext' );
     
     // Return false if no options found
-    if ( false === $thm_insert_position && false === $thm_authorinfo && false === $thm_footertext )
+    if ( false === $thm_insert_position && false === $thm_authorinfo && false === $thm_footertext ) {
     	return false; 
+	}
     	
     // Return a sanitized array from legacy options if found
     $legacy_sanitized_opt = array(
-    		'index_insert' 	=> intval( $thm_insert_position ),
-    		'author_info'  	=> ( $thm_authorinfo == "true" ) ? 1 : 0,
-    		'footer_txt' 	=> wp_kses_post( $thm_footertext ),
-    		'del_legacy_opt'=> 0
-    	);
+		'index_insert' 	=> intval( $thm_insert_position ),
+		'author_info'  	=> ( $thm_authorinfo == "true" ) ? 1 : 0,
+		'footer_txt' 	=> wp_kses_post( $thm_footertext ),
+		'del_legacy_opt'=> 0,
+		'legacy_xhtml'	=> 1,  // 0 = not checked 1 = check
+		'layout'        => thematic_default_theme_layout()
+	);
 
     return apply_filters( 'thematic_theme_convert_legacy_opt', $legacy_sanitized_opt );
 }
@@ -162,7 +157,7 @@ function thematic_convert_legacy_opt() {
  *
  * Filter: thematic_theme_default_opt
  * 
- * @since Thematic 1.0
+ * @since 1.0.0
  *
  */
 function thematic_default_opt() {
@@ -172,7 +167,7 @@ function thematic_default_opt() {
 		'footer_txt' 	=> 'Powered by [wp-link]. Built on the [theme-link].',
 		'del_legacy_opt'=> 0, // 0 = not checked 1 = check
 		'legacy_xhtml'	=> 0,  // 0 = not checked 1 = check
-		'layout'        => 'right-sidebar'
+		'layout'        => thematic_default_theme_layout()
 	);
 
 	return apply_filters( 'thematic_theme_default_opt', $thematic_default_opt );
@@ -187,7 +182,7 @@ function thematic_default_opt() {
  * The filter provides the ability for child themes to customize or remove and add 
  * their own options page and queue contextual help in one function
  * 
- * @since Thematic 1.0
+ * @since 1.0.0
  */
  
 function thematic_opt_add_page() {
@@ -212,7 +207,7 @@ add_action( 'admin_menu', 'thematic_opt_add_page' );
  * Filter: thematic_theme_opt_help_sidebar <br>
  * Override: childtheme_override_opt_page_help <br>
  * 
- * @since Thematic 1.0 
+ * @since 1.0.0
  */
 if (function_exists('childtheme_override_opt_page_help')) {
 	function thematic_opt_page_help() {
@@ -245,7 +240,7 @@ if (function_exists('childtheme_override_opt_page_help')) {
 /**
  * Renders the theme options page
  *
- * @since Thematic 1.0
+ * @since 1.0.0
  */
 function thematic_do_opt_page() { ?>
 
@@ -279,7 +274,7 @@ function thematic_do_opt_page() { ?>
  *
  * Filter: thematic_theme_opt_section_main
  *
- * @since Thematic 1.0
+ * @since 1.0.0
  */
 function thematic_do_opt_section_main() {
 	$thematic_opt_section_main = '';
@@ -290,7 +285,7 @@ function thematic_do_opt_section_main() {
 /**
  * Renders Index Insert elements
  *
- * @since Thematic 1.0
+ * @since 1.0.0
  */
 function thematic_do_insert_opt() { 
 ?>
@@ -303,7 +298,7 @@ function thematic_do_insert_opt() {
 /**
  * Renders Author Info elements
  *
- * @since Thematic 1.0
+ * @since 1.0.0
  */
 function thematic_do_auth_opt() { 
 ?>
@@ -316,7 +311,7 @@ function thematic_do_auth_opt() {
 /**
  * Renders Footer Text elements
  *
- * @since Thematic 1.0
+ * @since 1.0.0
  */
 function thematic_do_footer_opt() { 
 ?>
@@ -328,7 +323,7 @@ function thematic_do_footer_opt() {
 /**
  * Renders Leagcy XTML1.0 mode checkbox
  *
- * @since Thematic 2.0
+ * @since Thematic 2.0.0
  */
  function thematic_do_legacy_xhtml_opt() {
 ?>
@@ -341,7 +336,7 @@ function thematic_do_footer_opt() {
 /**
  * Renders Legacy Options elements
  *
- * @since Thematic 1.0
+ * @since 1.0.0
  */
 function thematic_do_legacy_opt() {
 ?>
@@ -365,7 +360,7 @@ function thematic_do_legacy_opt() {
  * Override: childtheme_override_validate_opt <br>
  * Filter: thematic_theme_opt_validation
  * 
- * @since Thematic 1.0 
+ * @since 1.0.0
  */
 if (function_exists('childtheme_override_validate_opt')) {
 	function thematic_validate_opt($input) {
@@ -392,24 +387,21 @@ if (function_exists('childtheme_override_validate_opt')) {
 		$output['author_info'] = ( isset( $input['author_info'] ) && 1 == $input['author_info'] ?  1 : 0 );
  	 
 		// Footer Text sanitized allowing HTML and WP shortcodes
-		if ( isset( $input['footer_txt'] ) ) 
+		if ( isset( $input['footer_txt'] ) ) {
 			$output['footer_txt'] = wp_kses_post( $input['footer_txt'] ) ;	
- 	   
+		}
+
 		// Remove Legacy XHTML CheckBox value either 1(yes) or 0(no)
 		$output['legacy_xhtml'] = ( isset( $input['legacy_xhtml'] ) && 1 == $input['legacy_xhtml'] ?  1 : 0 );
 		
 		// Check and set layout
 		if( isset( $input['layout'] ) ) {
-			switch( $input['layout'] ) {
-				case 'left-sidebar':
-					$output['layout'] = 'left-sidebar';
-					break;
-				case 'three-columns':
-					$output['layout'] = 'three-columns';
-					break;
-				default:
-					$output['layout'] = 'right-sidebar';
-					break;
+			$available_layouts = thematic_available_layout_slugs();
+
+			if( in_array( $input['layout'], $available_layouts ) ) {
+				$output['layout'] = $input['layout'];
+			} else {
+				$output['layout'] = thematic_default_theme_layout();
 			}
 		}
  	   

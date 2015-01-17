@@ -67,8 +67,8 @@ function thematic_excerpt_rss() {
 	$output = strip_tags( $post->post_excerpt );
 	if ( post_password_required( $post ) ) {
 		$output = __( 'There is no excerpt because this is a protected post.', 'thematic' );
-		return $output;
-}
+		return $output;	
+	}
 
 	return apply_filters( 'thematic_excerpt_rss', $output );
 
@@ -137,15 +137,113 @@ function thematic_is_custom_post_type() {
 }
 
 /**
- * Check if the option to use legacy xhtml is set
- * 
- * @return bool
+ * Determine if we want to use html5 or xhtml markup
+ *
+ * @return bool True for xhtml, false for html5 markup
  */
 function thematic_is_legacy_xhtml() {
-	if ( thematic_get_theme_opt( 'legacy_xhtml' ) === 1 || current_theme_supports( 'thematic_legacy' ) )
+
+	// Child themes can set html5 markup
+	if ( current_theme_supports( 'thematic_html5' ) ) {
+		return false;
+	}
+
+	// Child themes can opt to use xhtml
+	if ( current_theme_supports( 'thematic_xhtml' ) ) {
 		return true;
-		
-	return false;
+	}
+
+	// New 2.0 installations do not use the legacy mode by default
+	if ( 0 == thematic_get_theme_opt( 'legacy_xhtml' ) ) {
+		return false;
+	}
+
+	return apply_filters( 'thematic_is_legacy_xhtml', true );
 }
 
+
+/**
+ * Specifies the available layouts for the theme
+ *
+ * @since 2.0.0
+ *
+ * @return array $layouts
+ */
+function thematic_available_theme_layouts() {
+	$layouts = array(
+		'left-sidebar' => array(
+			'slug'  => 'left-sidebar',
+			'title' => __( 'Left Sidebar', 'thematic' )
+		),
+		'right-sidebar' => array(
+			'slug' => 'right-sidebar',
+			'title' => __( 'Right Sidebar', 'thematic' )
+		),
+		'three-columns' => array(
+			'slug' => 'three-columns',
+			'title' => __( 'Three columns', 'thematic' )
+		),
+		'full-width' => array(
+			'slug' => 'full-width',
+			'title' => __( 'Full width', 'thematic' )
+		)
+	);
+
+	return apply_filters( 'thematic_available_theme_layouts', $layouts );
+}
+
+
+/**
+ * Create a simple array of the available layout strings
+ *
+ * @since 2.0.0
+ *
+ * @return array $layouts
+ */
+function thematic_available_layout_slugs() {
+	$possible_layouts = thematic_available_theme_layouts();
+	$available_layouts = array();
+	foreach( $possible_layouts as $layout) {
+		$available_layouts[] = $layout['slug'];
+	}
+
+	return $available_layouts;
+}
+
+
+/**
+ * Decide the default layout of the theme
+ *
+ * @since 2.0.0
+ *
+ * @return string $default_layout
+ */
+function thematic_default_theme_layout() {
+
+	$options = thematic_get_wp_opt( 'thematic_theme_opt' );
+
+	// use a default layout of right-sidebar if no theme option has been set
+	$thematic_default_layout = isset( $options['layout'] ) ? $options['layout'] : 'right-sidebar';
+
+	/**
+	 * Filter for the default layout
+	 *
+	 * Specifies the theme layout upon first setup. The returned string need to match 
+	 * one of the available layout slugs. Any invalid slug will be ignored.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @see thematic_available_layout_slugs()
+	 *
+	 * @param string $thematic_default_layout
+	 */
+	$thematic_possible_default_layout = apply_filters( 'thematic_default_theme_layout', $thematic_default_layout );
+
+	// only use the filtered layout if it is a valid layout
+	if ( in_array( $thematic_possible_default_layout, thematic_available_layout_slugs() ) ) {
+		$thematic_default_layout = $thematic_possible_default_layout;
+	}
+
+	return $thematic_default_layout;
+}
 ?>
